@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
   // If user is logged in and trying to access login/signup
   if (isAuthRoute && user) {
     // We don't check business row here to keep edge fast, client will handle onboarding redirect
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(new URL('/dashboard/sales/new', request.url))
   }
 
   return supabaseResponse

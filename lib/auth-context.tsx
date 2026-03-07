@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from("businesses")
         .select("*")
         .eq("owner_id", userId)
-        .single();
+        .maybeSingle();
       
       if (error && error.code !== 'PGRST116') {
         console.error("Error fetching business:", error);
@@ -86,11 +86,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (event === "SIGNED_IN" && currentSession?.user) {
           setLoading(true);
-          const businessData = await fetchBusiness(currentSession.user.id);
-          if (businessData) {
-            await hydrateData(businessData.id);
+          try {
+            const businessData = await fetchBusiness(currentSession.user.id);
+            if (businessData) {
+              await hydrateData(businessData.id);
+            }
+          } catch (e) {
+            console.error("Hydration error:", e);
+          } finally {
+            setLoading(false);
           }
-          setLoading(false);
         } else if (event === "SIGNED_OUT") {
           setBusiness(null);
           router.push("/login");

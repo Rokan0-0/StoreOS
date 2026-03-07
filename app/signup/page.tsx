@@ -20,15 +20,20 @@ export default function SignupPage() {
     setError("");
 
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log("Attempting to sign up with:", email);
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
+      
+      console.log("SignUp Response:", { data, error });
       if (error) throw error;
       
-      // Auto-redirect to onboarding since they just signed up and won't have a business yet
-      router.push("/onboarding");
+      console.log("Sign up successful, routing to /onboarding");
+      // Force a full navigation so middleware sees the new auth cookie
+      window.location.href = "/onboarding";
     } catch (err: any) {
+      console.error("Signup catch block error:", err);
       setError(err.message || "Failed to create account. Please try again.");
       setLoading(false);
     }

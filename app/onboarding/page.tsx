@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
@@ -96,8 +96,8 @@ export default function OnboardingPage() {
       // Refresh Auth Context to sync downstream
       await refreshBusiness();
       
-      // Navigate to dashboard
-      router.push("/dashboard");
+      // Navigate to record sale
+      router.push("/dashboard/sales/new");
 
     } catch (err: any) {
       setError(err.message || "Failed to save business profile.");
@@ -105,14 +105,23 @@ export default function OnboardingPage() {
     }
   };
 
-  // Prevent rendering if not logged in (middleware usually catches this, but to be safe)
-  if (!user && !loading) {
+  // Show loading spinner while Auth context is still initializing
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0d1117]">
         <div className="w-8 h-8 rounded-full border-2 border-green-500 border-t-transparent animate-spin" />
       </div>
     );
   }
+
+  // Double-check auth state
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [user, loading, router]);
+
+  if (!user) return null; // Prevent render flash before effect redirects
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#0d1117]">

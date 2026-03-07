@@ -20,22 +20,31 @@ export default function LoginPage() {
     setError("");
 
     try {
+      console.log("Attempting to sign in with:", email);
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      console.log("SignIn Response:", { data, error });
       if (error) throw error;
       
+      console.log("Fetching business for user...", data.user.id);
       // Check if they need onboarding
-      const { data: business } = await supabase
+      const { data: business, error: bizError } = await supabase
         .from("businesses")
         .select("id")
         .eq("owner_id", data.user.id)
-        .single();
+        .maybeSingle();
+
+      console.log("Business fetch result:", { business, bizError });
 
       if (business) {
-        router.push("/dashboard");
+        console.log("Business found, routing to /dashboard/sales/new");
+        window.location.href = "/dashboard/sales/new";
       } else {
-        router.push("/onboarding");
+        console.log("No business found, routing to /onboarding");
+        window.location.href = "/onboarding";
       }
     } catch (err: any) {
+      console.error("Login catch block error:", err);
       setError(err.message || "Failed to sign in. Please check your credentials.");
       setLoading(false);
     }
