@@ -68,8 +68,9 @@ export default function AddProductPage() {
 
       setSaved(true);
       setTimeout(() => router.push("/dashboard/inventory"), 800);
-    } catch {
-      setError("Failed to save product. Try again.");
+    } catch (err: any) {
+      console.error("Product Save Error:", err);
+      setError(err?.message || "Failed to save product. Try again.");
     } finally {
       setSaving(false);
     }

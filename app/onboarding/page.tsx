@@ -96,8 +96,8 @@ export default function OnboardingPage() {
       // Refresh Auth Context to sync downstream
       await refreshBusiness();
       
-      // Navigate to record sale
-      router.push("/dashboard/sales/new");
+      // Force a full reload so the dashboard layout loads with fresh auth state
+      window.location.href = "/dashboard/sales/new";
 
     } catch (err: any) {
       setError(err.message || "Failed to save business profile.");

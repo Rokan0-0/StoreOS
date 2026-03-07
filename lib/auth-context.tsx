@@ -88,12 +88,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(true);
           try {
             const businessData = await fetchBusiness(currentSession.user.id);
+            // Unblock the UI immediately after we have the business record
+            setLoading(false);
+            // Run data hydration in the background — don't block the spinner on it
             if (businessData) {
-              await hydrateData(businessData.id);
+              hydrateData(businessData.id).catch(e => console.error("Hydration error:", e));
             }
           } catch (e) {
-            console.error("Hydration error:", e);
-          } finally {
+            console.error("Business fetch error:", e);
             setLoading(false);
           }
         } else if (event === "SIGNED_OUT") {

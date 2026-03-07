@@ -17,6 +17,7 @@ import { db } from "@/lib/db";
 import { formatCurrency, cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { queueLocalMutation } from "@/lib/sync";
+import { v4 as uuidv4 } from "uuid";
 import type { Product } from "@/types";
 
 const CATEGORIES = [
@@ -58,6 +59,32 @@ export default function InventoryPage() {
     await queueLocalMutation('products', 'delete', id, null);
     setShowDeleteId(null);
     loadProducts();
+  }
+
+  async function seedSampleData() {
+    if (!business) return;
+    setLoading(true);
+    
+    const samples: Product[] = [
+      { id: uuidv4(), business_id: business.id, name: "Peak Milk 400g", category: "Dairy", buy_price: 1500, sell_price: 1800, quantity: 24, threshold: 5, updated_at: new Date().toISOString() },
+      { id: uuidv4(), business_id: business.id, name: "Milo 500g", category: "Beverages", buy_price: 2000, sell_price: 2500, quantity: 15, threshold: 5, updated_at: new Date().toISOString() },
+      { id: uuidv4(), business_id: business.id, name: "Golden Penny Spaghetti", category: "Grains & Cereals", buy_price: 400, sell_price: 550, quantity: 50, threshold: 10, updated_at: new Date().toISOString() },
+      { id: uuidv4(), business_id: business.id, name: "Eva Water 75cl", category: "Beverages", buy_price: 150, sell_price: 250, quantity: 120, threshold: 20, updated_at: new Date().toISOString() },
+      { id: uuidv4(), business_id: business.id, name: "Digestive Biscuits", category: "Snacks", buy_price: 800, sell_price: 1000, quantity: 30, threshold: 5, updated_at: new Date().toISOString() },
+    ];
+
+    try {
+      for (const p of samples) {
+        await db.products.add(p);
+        await queueLocalMutation('products', 'insert', p.id, p);
+      }
+      await loadProducts();
+    } catch (err) {
+      console.error("Seed error:", err);
+      alert("Failed to seed data. Check console.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   const filtered = products.filter((p) => {
@@ -134,9 +161,22 @@ export default function InventoryPage() {
             <Package className="w-12 h-12 text-gray-200 mx-auto mb-3" />
             <p className="text-gray-500 font-medium">No products found</p>
             {products.length === 0 && (
-              <Link href="/dashboard/inventory/add" className="mt-3 inline-block btn-primary text-sm">
-                Add your first product
-              </Link>
+              <div className="flex flex-col items-center gap-3 mt-4">
+                <Link href="/dashboard/inventory/add" className="btn-primary text-sm px-6">
+                  Add your first product
+                </Link>
+                <div className="flex items-center gap-4 text-sm text-gray-400">
+                  <span className="h-px w-12 bg-gray-200"></span>
+                  or
+                  <span className="h-px w-12 bg-gray-200"></span>
+                </div>
+                <button 
+                  onClick={seedSampleData}
+                  className="px-6 py-2 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 hover:border-green-500 hover:text-green-600 transition-colors text-sm font-semibold"
+                >
+                  Seed Example Data
+                </button>
+              </div>
             )}
           </div>
         ) : (
