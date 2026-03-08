@@ -114,14 +114,15 @@ export default function OnboardingPage() {
     );
   }
 
+  // Prevent background rendering or loader showing if we are about to redirect
+  if (!user) return null;
+
   // Double-check auth state
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
     }
   }, [user, authLoading, router]);
-
-  if (!user) return null; // Prevent render flash before effect redirects
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#0d1117]">
