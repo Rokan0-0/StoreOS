@@ -19,7 +19,7 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard/sales/new");
+  redirect("/dashboard");
 }
 
 export async function signup(formData: FormData) {

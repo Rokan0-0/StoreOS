@@ -81,5 +81,5 @@ export async function completeOnboarding(formData: FormData) {
 
   // Next steps
   revalidatePath("/", "layout");
-  redirect("/dashboard/sales/new");
+  redirect("/dashboard");
 }

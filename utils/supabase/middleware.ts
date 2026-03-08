@@ -54,12 +54,12 @@ export async function updateSession(request: NextRequest) {
 
   // If user is already onboarded, don't let them hit onboarding again
   if (isOnboardingRoute && user && isOnboarded) {
-    return NextResponse.redirect(new URL('/dashboard/sales/new', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   if (isAuthRoute && user) {
     if (isOnboarded) {
-      return NextResponse.redirect(new URL('/dashboard/sales/new', request.url))
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     } else {
       return NextResponse.redirect(new URL('/onboarding', request.url))
     }
