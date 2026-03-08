@@ -8,7 +8,7 @@ import { Store, Upload, CheckCircle, ArrowRight, ArrowLeft } from "lucide-react"
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user, refreshBusiness } = useAuth();
+  const { user, refreshBusiness, loading: authLoading } = useAuth();
   
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -106,7 +106,7 @@ export default function OnboardingPage() {
   };
 
   // Show loading spinner while Auth context is still initializing
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0d1117]">
         <div className="w-8 h-8 rounded-full border-2 border-green-500 border-t-transparent animate-spin" />
@@ -116,10 +116,10 @@ export default function OnboardingPage() {
 
   // Double-check auth state
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.push("/login");
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
 
   if (!user) return null; // Prevent render flash before effect redirects
 
