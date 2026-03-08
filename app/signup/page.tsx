@@ -1,42 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useTransition, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Store, ArrowRight, AlertCircle } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { signup } from "@/app/auth/actions";
 
 export default function SignupPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleSignup(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email || password.length < 6) return setError("Please enter a valid email and a password of at least 6 characters.");
-    setLoading(true);
-    setError("");
-
-    try {
-      console.log("Attempting to sign up with:", email);
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      
-      console.log("SignUp Response:", { data, error });
-      if (error) throw error;
-      
-      console.log("Sign up successful, routing to /onboarding");
-      // Force a full navigation so middleware sees the new auth cookie
-      window.location.href = "/onboarding";
-    } catch (err: any) {
-      console.error("Signup catch block error:", err);
-      setError(err.message || "Failed to create account. Please try again.");
-      setLoading(false);
-    }
+  async function handleSubmit(formData: FormData) {
+    setError(null);
+    startTransition(async () => {
+      const result = await signup(formData);
+      if (result?.error) {
+        setError(result.error);
+      }
+    });
   }
 
   return (
@@ -56,21 +36,20 @@ export default function SignupPage() {
           <p className="text-sm text-gray-500 mb-6">Start running your store smarter</p>
 
           {error && (
-            <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl mb-5 flex items-start gap-2">
+            <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl mb-5 flex items-start gap-2 animate-fade-in">
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
               <p>{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSignup} className="space-y-4">
+          <form action={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email address</label>
               <input
                 type="email"
+                name="email"
                 className="input"
                 placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -78,20 +57,23 @@ export default function SignupPage() {
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
               <input
                 type="password"
+                name="password"
                 className="input"
                 placeholder="At least 6 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isPending}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 mt-2"
             >
-              {loading ? "Creating account..." : "Continue"} <ArrowRight className="w-4 h-4" />
+              {isPending ? (
+                <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              ) : (
+                <>Continue <ArrowRight className="w-4 h-4" /></>
+              )}
             </button>
           </form>
         </div>

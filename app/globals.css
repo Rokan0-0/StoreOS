@@ -32,149 +32,151 @@ body {
   color: var(--text);
 }
 
-/* Reusable component classes (CSS only, no @apply) */
-.card {
-  background-color: white;
-  border-radius: 1rem;
-  border: 1px solid #f3f4f6;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-}
+@layer components {
+  /* Reusable component classes */
+  .card {
+    background-color: white;
+    border-radius: 1rem;
+    border: 1px solid #f3f4f6;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
 
-.btn-primary {
-  background-color: #16a34a;
-  color: white;
-  font-weight: 600;
-  padding: 0.625rem 1rem;
-  border-radius: 0.75rem;
-  transition: all 0.2s;
-  cursor: pointer;
-  border: none;
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-}
-.btn-primary:hover {
-  background-color: #15803d;
-}
-.btn-primary:active {
-  transform: scale(0.95);
-}
+  .btn-primary {
+    background-color: #16a34a;
+    color: white;
+    font-weight: 600;
+    padding: 0.625rem 1rem;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+  }
+  .btn-primary:hover {
+    background-color: #15803d;
+  }
+  .btn-primary:active {
+    transform: scale(0.95);
+  }
 
-.btn-secondary {
-  background-color: #f3f4f6;
-  color: #374151;
-  font-weight: 600;
-  padding: 0.625rem 1rem;
-  border-radius: 0.75rem;
-  transition: all 0.2s;
-  cursor: pointer;
-  border: none;
-  display: inline-flex;
-  align-items: center;
-}
-.btn-secondary:hover {
-  background-color: #e5e7eb;
-}
-.btn-secondary:active {
-  transform: scale(0.95);
-}
+  .btn-secondary {
+    background-color: #f3f4f6;
+    color: #374151;
+    font-weight: 600;
+    padding: 0.625rem 1rem;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .btn-secondary:hover {
+    background-color: #e5e7eb;
+  }
+  .btn-secondary:active {
+    transform: scale(0.95);
+  }
 
-.btn-ghost {
-  color: #4b5563;
-  font-weight: 500;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.75rem;
-  transition: all 0.2s;
-  cursor: pointer;
-  border: none;
-  background: transparent;
-}
-.btn-ghost:hover {
-  background-color: #f3f4f6;
-}
+  .btn-ghost {
+    color: #4b5563;
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+  }
+  .btn-ghost:hover {
+    background-color: #f3f4f6;
+  }
 
-.btn-danger {
-  background-color: #fef2f2;
-  color: #dc2626;
-  font-weight: 600;
-  padding: 0.625rem 1rem;
-  border-radius: 0.75rem;
-  transition: all 0.2s;
-  cursor: pointer;
-  border: none;
-  display: inline-flex;
-  align-items: center;
-}
-.btn-danger:hover {
-  background-color: #fee2e2;
-}
-.btn-danger:active {
-  transform: scale(0.95);
-}
+  .btn-danger {
+    background-color: #fef2f2;
+    color: #dc2626;
+    font-weight: 600;
+    padding: 0.625rem 1rem;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .btn-danger:hover {
+    background-color: #fee2e2;
+  }
+  .btn-danger:active {
+    transform: scale(0.95);
+  }
 
-.input {
-  width: 100%;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  outline: none;
-  transition: all 0.2s;
-  font-family: inherit;
-  color: #111827;
-}
-.input::placeholder {
-  color: #9ca3af;
-}
-.input:focus {
-  border-color: #16a34a;
-  box-shadow: 0 0 0 3px rgb(22 163 74 / 0.1);
-}
+  .input {
+    width: 100%;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s;
+    font-family: inherit;
+    color: #111827;
+  }
+  .input::placeholder {
+    color: #9ca3af;
+  }
+  .input:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgb(22 163 74 / 0.1);
+  }
 
-.badge-green {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  background-color: #f0fdf4;
-  color: #15803d;
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 0.25rem 0.625rem;
-  border-radius: 9999px;
-}
-.badge-red {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  background-color: #fef2f2;
-  color: #dc2626;
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 0.25rem 0.625rem;
-  border-radius: 9999px;
-}
-.badge-yellow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  background-color: #fffbeb;
-  color: #b45309;
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 0.25rem 0.625rem;
-  border-radius: 9999px;
-}
-.badge-blue {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  background-color: #eff6ff;
-  color: #1d4ed8;
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 0.25rem 0.625rem;
-  border-radius: 9999px;
+  .badge-green {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background-color: #f0fdf4;
+    color: #15803d;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+  }
+  .badge-red {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background-color: #fef2f2;
+    color: #dc2626;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+  }
+  .badge-yellow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background-color: #fffbeb;
+    color: #b45309;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+  }
+  .badge-blue {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+  }
 }
 
 /* Custom scrollbar */

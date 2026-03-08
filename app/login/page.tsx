@@ -1,53 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useTransition, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Store, ArrowRight, AlertCircle } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { login } from "@/app/auth/actions";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email || !password) return setError("Please enter email and password.");
-    setLoading(true);
-    setError("");
-
-    try {
-      console.log("Attempting to sign in with:", email);
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      console.log("SignIn Response:", { data, error });
-      if (error) throw error;
-      
-      console.log("Fetching business for user...", data.user.id);
-      // Check if they need onboarding
-      const { data: business, error: bizError } = await supabase
-        .from("businesses")
-        .select("id")
-        .eq("owner_id", data.user.id)
-        .maybeSingle();
-
-      console.log("Business fetch result:", { business, bizError });
-
-      if (business) {
-        console.log("Business found, routing to /dashboard/sales/new");
-        window.location.href = "/dashboard/sales/new";
-      } else {
-        console.log("No business found, routing to /onboarding");
-        window.location.href = "/onboarding";
+  async function handleSubmit(formData: FormData) {
+    setError(null);
+    startTransition(async () => {
+      const result = await login(formData);
+      if (result?.error) {
+        setError(result.error);
       }
-    } catch (err: any) {
-      console.error("Login catch block error:", err);
-      setError(err.message || "Failed to sign in. Please check your credentials.");
-      setLoading(false);
-    }
+    });
   }
 
   return (
@@ -67,47 +36,44 @@ export default function LoginPage() {
           <p className="text-sm text-gray-500 mb-6">Sign in to manage your store</p>
 
           {error && (
-            <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl mb-5 flex items-start gap-2">
+            <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl mb-5 flex items-start gap-2 animate-fade-in">
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
               <p>{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form action={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email address</label>
               <input
                 type="email"
+                name="email"
                 className="input"
                 placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-sm font-semibold text-gray-700">Password</label>
-                <Link href="#" className="text-xs font-semibold text-green-600 hover:text-green-700 transition-colors cursor-not-allowed opacity-50">
-                  Forgot?
-                </Link>
-              </div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
               <input
                 type="password"
+                name="password"
                 className="input"
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isPending}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 mt-2"
             >
-              {loading ? "Signing in..." : "Sign in"} <ArrowRight className="w-4 h-4" />
+              {isPending ? (
+                <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              ) : (
+                <>Sign in <ArrowRight className="w-4 h-4" /></>
+              )}
             </button>
           </form>
         </div>
@@ -116,7 +82,7 @@ export default function LoginPage() {
         <p className="text-center text-sm text-gray-400 mt-8">
           Don&apos;t have an account?{" "}
           <Link href="/signup" className="text-green-400 font-semibold hover:text-green-300 transition-colors">
-            Create one free
+            Create one
           </Link>
         </p>
       </div>

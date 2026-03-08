@@ -42,7 +42,7 @@ export default function DashboardPage() {
   });
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [loading, setLoading] = useState(true);
-  const { business, loading: authLoading } = useAuth();
+  const { business } = useAuth();
 
   useEffect(() => {
     if (business) {
@@ -213,7 +213,7 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-xs text-gray-500 font-medium">{card.label}</p>
                 <p className="text-xl font-bold text-gray-900 mt-0.5 leading-tight">
-                  {loading || authLoading ? (
+                  {loading ? (
                     <span className="block h-6 w-24 bg-gray-100 rounded animate-pulse" />
                   ) : (
                     card.value

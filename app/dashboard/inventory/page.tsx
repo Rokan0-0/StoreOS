@@ -126,7 +126,7 @@ export default function InventoryPage() {
               placeholder="Search products..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="input pl-9"
+              className="input pl-10"
             />
           </div>
           <div className="relative">

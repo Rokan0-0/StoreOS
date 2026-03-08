@@ -1,42 +1,41 @@
-"use client";
-
 import Sidebar from "@/components/layout/Sidebar";
 import MobileNav from "@/components/layout/MobileNav";
-import { useAuth } from "@/lib/auth-context";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { AuthProvider } from "@/lib/auth-context";
+import { createClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { business, loading, user } = useAuth();
-  const router = useRouter();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    } else if (!loading && user && !business) {
-      router.push("/onboarding");
-    }
-  }, [loading, user, business, router]);
+  if (!user) {
+    redirect("/login");
+  }
 
-  if (loading || !business) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-8 h-8 rounded-full border-2 border-green-500 border-t-transparent animate-spin" />
-      </div>
-    );
+  // Fetch business profile
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("*")
+    .eq("owner_id", user.id)
+    .maybeSingle();
+
+  if (!business) {
+    redirect("/onboarding");
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="lg:ml-60">
-        <main className="min-h-screen pb-20 lg:pb-0">{children}</main>
+    <AuthProvider user={user} business={business}>
+      <div className="min-h-screen bg-gray-50">
+        <Sidebar />
+        <div className="lg:ml-60">
+          <main className="min-h-screen pb-20 lg:pb-0">{children}</main>
+        </div>
+        <MobileNav />
       </div>
-      <MobileNav />
-    </div>
+    </AuthProvider>
   );
 }
