@@ -6,6 +6,8 @@ import Topbar from "@/components/layout/Topbar";
 import { db } from "@/lib/db";
 import { useAuth } from "@/lib/auth-context";
 import { queueLocalMutation } from "@/lib/sync";
+import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
+import { requestNotificationPermission } from "@/lib/notifications";
 import type { Business } from "@/types";
 
 const BUSINESS_TYPES = ["Supermarket", "Provision Store", "General Store"] as const;
@@ -22,6 +24,15 @@ export default function SettingsPage() {
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  const { canInstall, isInstalled, triggerInstall } = useInstallPrompt();
+  const [notifPermission, setNotifPermission] = useState<string>("default");
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotifPermission(Notification.permission);
+    }
+  }, []);
 
   useEffect(() => {
     if (business) {
@@ -113,6 +124,49 @@ export default function SettingsPage() {
                 onChange={(e) => update("low_stock_threshold", parseInt(e.target.value) || 5)}
               />
               <span className="text-sm text-gray-400">units (alert when stock falls below this)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* App & Notifications */}
+        <div className="card p-5 space-y-4 animate-fade-in">
+          <h3 className="font-semibold text-gray-900">App & Notifications</h3>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Install App</p>
+                <p className="text-xs text-gray-500">Add to home screen for offline access</p>
+              </div>
+              {isInstalled ? (
+                <span className="text-sm text-gray-400 flex items-center gap-1"><Check className="w-4 h-4"/> Installed</span>
+              ) : canInstall ? (
+                <button onClick={triggerInstall} className="btn-primary py-1.5 px-3 text-xs">Install</button>
+              ) : (
+                <span className="text-xs text-gray-400">Not supported on this browser/OS</span>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Push Notifications</p>
+                <p className="text-xs text-gray-500">Get alerts for low stock and credit</p>
+              </div>
+              {notifPermission === "granted" ? (
+                <span className="text-sm text-green-600 flex items-center gap-1 font-medium"><Check className="w-4 h-4"/> Enabled</span>
+              ) : notifPermission === "denied" ? (
+                <span className="text-xs text-red-500 max-w-25 text-right">Blocked in browser settings</span>
+              ) : (
+                <button 
+                  onClick={async () => {
+                    const status = await requestNotificationPermission();
+                    setNotifPermission(status);
+                  }} 
+                  className="btn-secondary py-1.5 px-3 text-xs"
+                >
+                  Enable
+                </button>
+              )}
             </div>
           </div>
         </div>

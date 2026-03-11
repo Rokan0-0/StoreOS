@@ -3,6 +3,8 @@ import MobileNav from "@/components/layout/MobileNav";
 import { AuthProvider } from "@/lib/auth-context";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import InstallPrompt from "@/components/install-prompt";
+import NotificationWatcher from "@/components/notification-watcher";
 
 export default async function DashboardLayout({
   children,
@@ -35,6 +37,8 @@ export default async function DashboardLayout({
           <main className="min-h-screen pb-20 lg:pb-0">{children}</main>
         </div>
         <MobileNav />
+        <InstallPrompt />
+        <NotificationWatcher />
       </div>
     </AuthProvider>
   );

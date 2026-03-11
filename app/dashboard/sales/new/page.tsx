@@ -16,6 +16,7 @@ import { db } from "@/lib/db";
 import { formatCurrency, cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { queueLocalMutation } from "@/lib/sync";
+import { sendLocalNotification } from "@/lib/notifications";
 import { v4 as uuidv4 } from "uuid";
 import type { Product, SaleItem, PaymentType, Customer, Sale, CreditTransaction } from "@/types";
 
@@ -114,6 +115,8 @@ export default function NewSalePage() {
         const p = await db.products.get(item.product_id);
         if (p) {
           const newQty = Math.max((p.quantity || 0) - item.quantity, 0);
+          const threshold = business.low_stock_threshold || 5;
+
           await db.products.update(item.product_id, { quantity: newQty });
           
           // Queue the product update
@@ -122,6 +125,15 @@ export default function NewSalePage() {
             quantity: newQty,
             updated_at: now
           });
+
+          // Trigger local push notification if stock falls to or below threshold
+          if (newQty <= threshold && (p.quantity || 0) > threshold) {
+            sendLocalNotification(
+              "Low Stock Alert",
+              `${p.name} is running low (${newQty} left). Tap to view inventory.`,
+              "/dashboard/inventory"
+            );
+          }
         }
       }
 
