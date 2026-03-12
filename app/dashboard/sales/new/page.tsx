@@ -19,6 +19,8 @@ import { queueLocalMutation } from "@/lib/sync";
 import { sendLocalNotification } from "@/lib/notifications";
 import { v4 as uuidv4 } from "uuid";
 import type { Product, SaleItem, PaymentType, Customer, Sale, CreditTransaction } from "@/types";
+import toast from "react-hot-toast";
+import Link from "next/link";
 
 export default function NewSalePage() {
   const router = useRouter();
@@ -111,6 +113,8 @@ export default function NewSalePage() {
       await queueLocalMutation('sales', 'insert', saleId, newSale);
 
       // Deduct stock
+      const alertedProducts: string[] = [];
+
       for (const item of cart) {
         const p = await db.products.get(item.product_id);
         if (p) {
@@ -126,15 +130,35 @@ export default function NewSalePage() {
             updated_at: now
           });
 
-          // Trigger local push notification if stock falls to or below threshold
+          // Trigger local push notification and keep track for react-toast if stock dropped
           if (newQty <= threshold && (p.quantity || 0) > threshold) {
-            sendLocalNotification(
+             alertedProducts.push(p.name);
+             sendLocalNotification(
               "Low Stock Alert",
               `${p.name} is running low (${newQty} left). Tap to view inventory.`,
-              "/dashboard/inventory"
-            );
+              "/dashboard/inventory?filter=low-stock"
+             );
           }
         }
+      }
+
+      if (alertedProducts.length > 0) {
+        const msg = alertedProducts.length === 1 
+           ? `⚠ Low stock: ${alertedProducts[0]} is running out.` 
+           : `⚠ ${alertedProducts.length} items are now low on stock.`;
+        
+        toast((t) => (
+           <div className="flex flex-col gap-1">
+             <span className="text-sm font-medium text-amber-900">{msg}</span>
+             <Link 
+               href="/dashboard/inventory?filter=low-stock" 
+               className="text-xs font-bold text-amber-700 underline"
+               onClick={() => toast.dismiss(t.id)}
+             >
+               View inventory &rarr;
+             </Link>
+           </div>
+        ), { duration: 6000, style: { background: '#fffbeb', border: '1px solid #fcd34d' }});
       }
 
       // Credit transaction

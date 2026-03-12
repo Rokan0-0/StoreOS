@@ -20,6 +20,13 @@ export interface Product {
   sell_price: number;
   quantity: number;
   threshold: number;
+  sell_type: "unit" | "pack" | "both";
+  pack_size?: number | null;
+  pack_label?: string | null;
+  unit_label?: string | null;
+  sell_price_pack?: number | null;
+  image_url?: string;
+  sku?: string;
   updated_at?: string;
 }
 
@@ -51,6 +58,7 @@ export interface Sale {
   customer_name?: string;
   staff_name?: string;
   created_at?: string;
+  voided?: boolean;
 }
 
 export interface CreditTransaction {
@@ -58,7 +66,7 @@ export interface CreditTransaction {
   business_id: string;
   customer_id: string;
   amount: number;
-  type: "debit" | "repayment";
+  type: "debit" | "repayment" | "credit";
   note?: string;
   sale_id?: string;
   created_at?: string;

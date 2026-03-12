@@ -7,8 +7,6 @@ import {
   Plus,
   Search,
   AlertTriangle,
-  Edit2,
-  Trash2,
   X,
   ChevronDown,
 } from "lucide-react";
@@ -19,6 +17,8 @@ import { useAuth } from "@/lib/auth-context";
 import { queueLocalMutation } from "@/lib/sync";
 import { v4 as uuidv4 } from "uuid";
 import type { Product } from "@/types";
+import InventoryRow from "@/components/inventory/inventory-row";
+import { useSearchParams } from "next/navigation";
 
 const CATEGORIES = [
   "All",
@@ -35,11 +35,19 @@ const CATEGORIES = [
 
 export default function InventoryPage() {
   const { business } = useAuth();
+  const searchParams = useSearchParams();
+  const filterQuery = searchParams.get("filter");
+
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
+  const [showLowStock, setShowLowStock] = useState(filterQuery === "low-stock");
   const [loading, setLoading] = useState(true);
   const [showDeleteId, setShowDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (filterQuery === "low-stock") setShowLowStock(true);
+  }, [filterQuery]);
 
   const loadProducts = useCallback(async () => {
     if (!business) return;
@@ -66,11 +74,11 @@ export default function InventoryPage() {
     setLoading(true);
     
     const samples: Product[] = [
-      { id: uuidv4(), business_id: business.id, name: "Peak Milk 400g", category: "Dairy", buy_price: 1500, sell_price: 1800, quantity: 24, threshold: 5, updated_at: new Date().toISOString() },
-      { id: uuidv4(), business_id: business.id, name: "Milo 500g", category: "Beverages", buy_price: 2000, sell_price: 2500, quantity: 15, threshold: 5, updated_at: new Date().toISOString() },
-      { id: uuidv4(), business_id: business.id, name: "Golden Penny Spaghetti", category: "Grains & Cereals", buy_price: 400, sell_price: 550, quantity: 50, threshold: 10, updated_at: new Date().toISOString() },
-      { id: uuidv4(), business_id: business.id, name: "Eva Water 75cl", category: "Beverages", buy_price: 150, sell_price: 250, quantity: 120, threshold: 20, updated_at: new Date().toISOString() },
-      { id: uuidv4(), business_id: business.id, name: "Digestive Biscuits", category: "Snacks", buy_price: 800, sell_price: 1000, quantity: 30, threshold: 5, updated_at: new Date().toISOString() },
+      { id: uuidv4(), business_id: business.id, name: "Peak Milk 400g", category: "Dairy", buy_price: 1500, sell_price: 1800, quantity: 24, threshold: 5, sell_type: "unit", updated_at: new Date().toISOString() },
+      { id: uuidv4(), business_id: business.id, name: "Milo 500g", category: "Beverages", buy_price: 2000, sell_price: 2500, quantity: 15, threshold: 5, sell_type: "unit", updated_at: new Date().toISOString() },
+      { id: uuidv4(), business_id: business.id, name: "Golden Penny Spaghetti", category: "Grains & Cereals", buy_price: 400, sell_price: 550, quantity: 50, threshold: 10, sell_type: "unit", updated_at: new Date().toISOString() },
+      { id: uuidv4(), business_id: business.id, name: "Eva Water 75cl", category: "Beverages", buy_price: 150, sell_price: 250, quantity: 120, threshold: 20, sell_type: "unit", updated_at: new Date().toISOString() },
+      { id: uuidv4(), business_id: business.id, name: "Digestive Biscuits", category: "Snacks", buy_price: 800, sell_price: 1000, quantity: 30, threshold: 5, sell_type: "unit", updated_at: new Date().toISOString() },
     ];
 
     try {
@@ -88,16 +96,33 @@ export default function InventoryPage() {
   }
 
   const filtered = products.filter((p) => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()) || (p.sku && p.sku.includes(search));
     const matchCategory = category === "All" || p.category === category;
-    return matchSearch && matchCategory;
+    const matchLowStock = showLowStock ? (p.quantity <= p.threshold) : true;
+    return matchSearch && matchCategory && matchLowStock;
   });
 
-  const lowStockCount = filtered.filter((p) => p.quantity <= p.threshold).length;
+  const allLowStockCount = products.filter((p) => p.quantity <= p.threshold).length;
+  const totalStockValue = products.reduce((sum, p) => sum + (p.quantity * p.buy_price), 0);
 
   return (
     <div className="animate-fade-in">
       <Topbar title="Inventory" />
+
+      {/* Header Summary Strip */}
+      <div className="bg-white border-b border-gray-100 flex items-center justify-between px-4 lg:px-6 py-3 text-xs sm:text-sm font-medium sticky top-14 z-20">
+         <div className="flex items-center gap-4 text-gray-500">
+            <span>Total: <strong className="text-gray-900">{products.length}</strong></span>
+            <span className="hidden sm:inline">Value: <strong className="text-gray-900">{formatCurrency(totalStockValue)}</strong></span>
+         </div>
+         <button 
+           onClick={() => setShowLowStock(!showLowStock)}
+           className={cn("flex items-center gap-1.5 transition-colors", showLowStock ? "text-amber-600 bg-amber-50 px-2 pl-1.5 py-0.5 rounded-full" : "text-amber-600 hover:text-amber-700")}
+         >
+            <AlertTriangle className="w-4 h-4" /> 
+            {showLowStock ? "Clear Alert Filter" : `Low Stock: ${allLowStockCount} \u2192`}
+         </button>
+      </div>
 
       <div className="px-4 lg:px-6 py-5 space-y-4">
         {/* Header */}
@@ -105,10 +130,7 @@ export default function InventoryPage() {
           <div>
             <h2 className="text-xl font-bold text-gray-900">Products</h2>
             <p className="text-sm text-gray-500">
-              {products.length} items
-              {lowStockCount > 0 && (
-                <span className="ml-2 text-amber-600 font-medium">· {lowStockCount} low</span>
-              )}
+              Manage items, prices and stock levels
             </p>
           </div>
           <Link href="/dashboard/inventory/add" className="btn-primary flex items-center gap-2 text-sm">
@@ -181,53 +203,14 @@ export default function InventoryPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {filtered.map((product) => {
-              const isLow = product.quantity <= product.threshold;
-              const isOut = product.quantity === 0;
-              return (
-                <div key={product.id} className="card p-4 flex items-center gap-4">
-                  <div
-                    className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                      isOut ? "bg-red-50" : isLow ? "bg-amber-50" : "bg-green-50"
-                    )}
-                  >
-                    <Package
-                      className={cn(
-                        "w-5 h-5",
-                        isOut ? "text-red-500" : isLow ? "text-amber-500" : "text-green-600"
-                      )}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{product.name}</p>
-                      {isOut && <span className="badge-red">Out of stock</span>}
-                      {isLow && !isOut && <span className="badge-yellow">Low stock</span>}
-                    </div>
-                    <p className="text-xs text-gray-400">{product.category}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-gray-900">{formatCurrency(product.sell_price)}</p>
-                    <p className="text-xs text-gray-400">{product.quantity} units</p>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Link
-                      href={`/dashboard/inventory/${product.id}/edit`}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <Edit2 className="w-3.5 h-3.5 text-gray-400" />
-                    </Link>
-                    <button
-                      onClick={() => setShowDeleteId(product.id)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+            {filtered.map((product) => (
+              <InventoryRow 
+                 key={product.id} 
+                 product={product} 
+                 onUpdate={loadProducts} 
+                 onDeleteRequest={setShowDeleteId} 
+              />
+            ))}
           </div>
         )}
       </div>

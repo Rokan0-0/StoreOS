@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ArrowLeft, Check } from "lucide-react";
 import Topbar from "@/components/layout/Topbar";
 import { db } from "@/lib/db";
 import { useAuth } from "@/lib/auth-context";
 import { queueLocalMutation } from "@/lib/sync";
-import { v4 as uuidv4 } from "uuid";
 import type { Product } from "@/types";
 
 const CATEGORIES = [
@@ -22,9 +21,12 @@ const CATEGORIES = [
   "Other",
 ];
 
-export default function AddProductPage() {
+export default function EditProductPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const router = useRouter();
   const { business } = useAuth();
+  
+  const [product, setProduct] = useState<Product | null>(null);
   const [form, setForm] = useState({
     name: "",
     category: "Beverages",
@@ -39,9 +41,36 @@ export default function AddProductPage() {
     sell_price_pack: "",
     sku: "",
   });
+  
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [loadingObj, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetch() {
+      const dbProduct = await db.products.get(params.id);
+      if (dbProduct) {
+        setProduct(dbProduct);
+        setForm({
+          name: dbProduct.name,
+          category: dbProduct.category,
+          buy_price: dbProduct.buy_price.toString(),
+          sell_price: dbProduct.sell_price.toString(),
+          quantity: dbProduct.quantity.toString(),
+          threshold: dbProduct.threshold.toString(),
+          sell_type: dbProduct.sell_type || "unit",
+          pack_size: dbProduct.pack_size?.toString() || "",
+          pack_label: dbProduct.pack_label || "",
+          unit_label: dbProduct.unit_label || "",
+          sell_price_pack: dbProduct.sell_price_pack?.toString() || "",
+          sku: dbProduct.sku || "",
+        });
+      }
+      setLoading(false);
+    }
+    fetch();
+  }, [params.id]);
 
   const updateForm = useCallback((key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -49,6 +78,8 @@ export default function AddProductPage() {
   }, []);
 
   async function handleSave() {
+    if (!product || !business) return;
+    
     if (!form.name.trim()) return setError("Product name is required.");
     if (!form.sell_price || isNaN(+form.sell_price)) return setError("Enter a valid selling price.");
     if (!form.quantity || isNaN(+form.quantity)) return setError("Enter a valid quantity.");
@@ -62,22 +93,19 @@ export default function AddProductPage() {
 
     setSaving(true);
     try {
-      if (!business) throw new Error("No business context");
-
       // 1. Duplicate check (case-insensitive)
       const existing = await db.products
         .where('business_id').equals(business.id)
         .filter(p => p.name.toLowerCase() === form.name.trim().toLowerCase())
         .first();
 
-      if (existing) {
+      if (existing && existing.id !== product.id) {
         setSaving(false);
         return setError("A product with this name already exists. Try adding a variant (e.g. 'Milo 500g').");
       }
 
-      const product: Product = {
-        id: uuidv4(),
-        business_id: business.id,
+      const updatedProduct: Product = {
+        ...product,
         name: form.name.trim(),
         category: form.category,
         buy_price: parseFloat(form.buy_price) || 0,
@@ -93,28 +121,31 @@ export default function AddProductPage() {
         updated_at: new Date().toISOString(),
       };
       
-      await db.products.add(product);
-      await queueLocalMutation('products', 'insert', product.id, product);
+      await db.products.update(product.id, updatedProduct);
+      await queueLocalMutation('products', 'update', product.id, updatedProduct);
 
       setSaved(true);
       setTimeout(() => router.push("/dashboard/inventory"), 800);
     } catch (err: any) {
       console.error("Product Save Error:", err);
-      setError(err?.message || "Failed to save product. Try again.");
+      setError(err?.message || "Failed to edit product. Try again.");
     } finally {
       setSaving(false);
     }
   }
 
+  if (loadingObj) return <div className="p-8 text-center text-gray-500">Loading product data...</div>;
+  if (!product) return <div className="p-8 text-center text-red-500">Product not found.</div>;
+
   return (
-    <div className="animate-fade-in">
-      <Topbar title="Add Product" />
+    <div className="animate-fade-in pb-20">
+      <Topbar title="Edit Product" />
       <div className="px-4 lg:px-6 py-5 max-w-lg mx-auto space-y-5">
         <button
           onClick={() => router.back()}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Inventory
+          <ArrowLeft className="w-4 h-4" /> Back
         </button>
 
         <div className="card p-5 space-y-4">
@@ -201,8 +232,8 @@ export default function AddProductPage() {
             )}
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Unit Type <span className="text-gray-400 font-normal">(Optional)</span></label>
-              <input className="input" placeholder="e.g. Sachet, Piece, Bottle" value={form.unit_label} onChange={(e) => updateForm("unit_label", e.target.value)} />
+               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Unit Type <span className="text-gray-400 font-normal">(Optional)</span></label>
+               <input className="input" placeholder="e.g. Sachet, Piece, Bottle" value={form.unit_label} onChange={(e) => updateForm("unit_label", e.target.value)} />
             </div>
           </div>
 
@@ -250,11 +281,11 @@ export default function AddProductPage() {
             }`}
           >
             {saved ? (
-              <><Check className="w-4 h-4" /> Saved!</>
+              <><Check className="w-4 h-4" /> Updated!</>
             ) : saving ? (
               "Saving..."
             ) : (
-              "Save Product"
+              "Save Changes"
             )}
           </button>
         </div>

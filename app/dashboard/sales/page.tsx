@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { formatCurrency, cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import type { Sale } from "@/types";
+import SaleRow from "@/components/sales/sale-row";
 
 export default function SalesPage() {
   const { business } = useAuth();
@@ -76,34 +77,13 @@ export default function SalesPage() {
         ) : (
           <div className="space-y-2">
             {filtered.map((sale) => (
-              <div key={sale.id} className="card p-4 flex items-center gap-4">
-                <div className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold",
-                  sale.payment_type === "Cash" ? "bg-green-50 text-green-700" :
-                  sale.payment_type === "Transfer" ? "bg-blue-50 text-blue-700" :
-                  "bg-red-50 text-red-600"
-                )}>
-                  {sale.payment_type.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
-                    {sale.items.map(i => i.product_name).join(", ")}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(sale.created_at ?? "").toLocaleString("en-NG", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                    {sale.customer_name && ` · ${sale.customer_name}`}
-                  </p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-bold text-gray-900">{formatCurrency(sale.total)}</p>
-                  <span className={cn(
-                    "text-xs font-medium",
-                    sale.payment_type === "Credit" ? "text-red-500" : "text-green-600"
-                  )}>
-                    {sale.payment_type}
-                  </span>
-                </div>
-              </div>
+              <SaleRow 
+                key={sale.id} 
+                sale={sale} 
+                onRefresh={() => {
+                  if (business) loadSales(business.id);
+                }} 
+              />
             ))}
           </div>
         )}

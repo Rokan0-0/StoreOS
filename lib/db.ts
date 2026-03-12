@@ -22,9 +22,9 @@ export class StoreOSDatabase extends Dexie {
 
   constructor() {
     super("StoreOSDB");
-    this.version(2).stores({
+    this.version(3).stores({
       businesses: "id, owner_id",
-      products: "id, business_id, category, updated_at",
+      products: "id, business_id, name, category, sell_type, sku, updated_at",
       customers: "id, business_id",
       sales: "id, business_id, customer_id, payment_type, created_at",
       credit_transactions: "id, business_id, customer_id, type, created_at",
