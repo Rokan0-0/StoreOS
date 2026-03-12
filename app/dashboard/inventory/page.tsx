@@ -181,7 +181,13 @@ export default function InventoryPage() {
         ) : filtered.length === 0 ? (
           <div className="card p-10 text-center">
             <Package className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">No products found</p>
+            <p className="text-gray-500 font-medium">
+              {products.length === 0 
+                ? "No products yet. Add your first product to get started." 
+                : showLowStock && search === "" && category === "All"
+                ? "All your stock levels look good. 👍"
+                : "No products found"}
+            </p>
             {products.length === 0 && (
               <div className="flex flex-col items-center gap-3 mt-4">
                 <Link href="/dashboard/inventory/add" className="btn-primary text-sm px-6">

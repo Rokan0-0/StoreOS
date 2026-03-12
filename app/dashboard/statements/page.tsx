@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FileText, Download, Plus, Calendar } from "lucide-react";
+import { FileText, Download, Plus, Calendar, Share2 } from "lucide-react";
 import Topbar from "@/components/layout/Topbar";
 import { db } from "@/lib/db";
 import { formatCurrency, todayISO } from "@/lib/utils";
@@ -120,6 +120,13 @@ export default function StatementsPage() {
     }
   }
 
+  function shareToWhatsApp(row: DailyData) {
+    if (!business) return;
+    const text = `*${business.name} - Daily Statement*\nDate: ${new Date(row.date).toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "long", year: "numeric" })}\n\n*SUMMARY*\nTotal Transactions: ${row.salesCount}\nTotal Revenue: ${formatCurrency(row.totalSales)}\nCash/Transfer Received: ${formatCurrency(row.cashReceived)}\nCredit Extended: ${formatCurrency(row.creditExtended)}\n\n_Generated via StoreOS_`;
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  }
+
   return (
     <div className="animate-fade-in">
       <Topbar title="Statements" />
@@ -172,12 +179,21 @@ export default function StatementsPage() {
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-sm font-bold text-green-700">{formatCurrency(row.totalSales)}</p>
-                  <button
-                    onClick={() => generateDailyStatement(row)}
-                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-green-600 mt-1 transition-colors"
-                  >
-                    <Download className="w-3 h-3" /> Download
-                  </button>
+                  <div className="flex flex-col items-end gap-1.5 mt-1.5">
+                    <button
+                      onClick={() => generateDailyStatement(row)}
+                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                      disabled={generating}
+                    >
+                      <Download className="w-3 h-3" /> {generating ? "Exporting..." : "Download CSV"}
+                    </button>
+                    <button
+                      onClick={() => shareToWhatsApp(row)}
+                      className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 transition-colors"
+                    >
+                      <Share2 className="w-3 h-3" /> WhatsApp
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

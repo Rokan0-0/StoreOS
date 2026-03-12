@@ -71,7 +71,11 @@ export default function SalesPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="card p-10 text-center">
-            <p className="text-gray-400 font-medium">No sales recorded yet</p>
+            <p className="text-gray-400 font-medium">
+              {sales.length === 0 
+                ? "No sales recorded today. Head to POS to record your first sale." 
+                : "No sales recorded yet"}
+            </p>
             <Link href="/dashboard/sales/new" className="mt-3 inline-block btn-primary text-sm">Record a sale</Link>
           </div>
         ) : (

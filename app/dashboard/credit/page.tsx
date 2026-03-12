@@ -66,7 +66,9 @@ export default function CreditPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="card p-10 text-center">
-            <p className="text-gray-400 font-medium">No customers found</p>
+             <p className="text-gray-400 font-medium">
+              {customers.length === 0 ? "No credit customers yet." : "No customers found"}
+            </p>
           </div>
         ) : (
           <div className="space-y-2">

@@ -293,14 +293,14 @@ export default function DashboardPage() {
           <div className="card p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">Low Stock Alerts</h3>
-              <Link href="/dashboard/inventory" className="text-xs text-green-600 font-medium flex items-center gap-1 hover:underline">
+              <Link href="/dashboard/inventory?filter=low-stock" className="text-xs text-green-600 font-medium flex items-center gap-1 hover:underline">
                 View all <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
             {stats.lowStockItems.length === 0 ? (
               <div className="text-center py-6">
                 <Package className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">All stock levels are healthy</p>
+                <p className="text-sm text-gray-400">All your stock levels look good. 👍</p>
               </div>
             ) : (
               <div className="space-y-2">

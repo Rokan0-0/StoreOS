@@ -231,7 +231,7 @@ export default function NewSalePage() {
                 className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-green-50 transition-colors group"
               >
                 <div className="text-left">
-                  <p className="text-sm font-medium text-gray-800">{p.name}</p>
+                  <p className="text-sm font-bold text-gray-900">{p.name}</p>
                   <p className="text-xs text-gray-400">{p.quantity} in stock</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -258,7 +258,7 @@ export default function NewSalePage() {
               {cart.map((item) => (
                 <div key={item.product_id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800">{item.product_name}</p>
+                    <p className="text-sm font-bold text-gray-900">{item.product_name}</p>
                     <p className="text-xs text-gray-400">{formatCurrency(item.unit_price)} each</p>
                   </div>
                   <div className="flex items-center gap-2">
