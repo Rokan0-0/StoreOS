@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import InstallPrompt from "@/components/install-prompt";
 import NotificationWatcher from "@/components/notification-watcher";
+import HydrationBootstrap from "@/components/HydrationBootstrap";
 
 export default async function DashboardLayout({
   children,
@@ -31,6 +32,7 @@ export default async function DashboardLayout({
 
   return (
     <AuthProvider user={user} business={business}>
+      <HydrationBootstrap businessId={business.id} />
       <div className="min-h-screen bg-gray-50">
         <Sidebar />
         <div className="lg:ml-60">
