@@ -42,6 +42,20 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   turbopack: {},
+  async redirects() {
+    return [
+      {
+        source: '/dashboard/statements',
+        destination: '/dashboard/reports',
+        permanent: true,
+      },
+      {
+        source: '/dashboard/history',
+        destination: '/dashboard/reports',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default withPWA(nextConfig);

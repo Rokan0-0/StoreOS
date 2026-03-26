@@ -51,15 +51,40 @@ export default function NewSalePage() {
     (p) => p.quantity > 0 && p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  function addToCart(product: Product) {
+  const [showPackSelect, setShowPackSelect] = useState<Product | null>(null);
+
+  function handleProductClick(p: Product) {
+    if (p.sell_type === "both" && p.sell_price_pack) {
+      setShowPackSelect(p);
+    } else {
+      addToCart(p, p.sell_type === "pack" ? "pack" : "unit");
+    }
+  }
+
+  function addToCart(product: Product, mode: "unit" | "pack") {
+    const isPack = mode === "pack";
+    const price = isPack && product.sell_price_pack ? product.sell_price_pack : product.sell_price;
+    const label = isPack ? (product.pack_label || "Pack") : (product.unit_label || "Unit");
+
     setCart((prev) => {
       const existing = prev.find((i) => i.product_id === product.id);
       if (existing) {
-        return prev.map((i) =>
-          i.product_id === product.id
-            ? { ...i, quantity: Math.min(i.quantity + 1, product.quantity), subtotal: (i.quantity + 1) * i.unit_price }
-            : i
-        );
+        if (existing.sell_mode !== mode) {
+          // Changed mode -> reset qty to 1
+          return prev.map((i) =>
+            i.product_id === product.id
+              ? { ...i, quantity: 1, sell_mode: mode, sell_label: label, unit_price: price, subtotal: price }
+              : i
+          );
+        } else {
+          const maxQty = isPack && product.pack_size ? Math.floor(product.quantity / product.pack_size) : product.quantity;
+          const newQty = Math.min(existing.quantity + 1, maxQty);
+          return prev.map((i) =>
+            i.product_id === product.id
+              ? { ...i, quantity: newQty, subtotal: newQty * i.unit_price }
+              : i
+          );
+        }
       }
       return [
         ...prev,
@@ -67,23 +92,44 @@ export default function NewSalePage() {
           product_id: product.id!,
           product_name: product.name,
           quantity: 1,
-          unit_price: product.sell_price,
-          subtotal: product.sell_price,
+          sell_mode: mode,
+          sell_label: label,
+          unit_price: price,
+          subtotal: price,
         },
       ];
     });
+    setShowPackSelect(null);
   }
 
   function updateQty(productId: string, delta: number) {
     setCart((prev) =>
       prev
-        .map((i) =>
-          i.product_id === productId
-            ? { ...i, quantity: i.quantity + delta, subtotal: (i.quantity + delta) * i.unit_price }
-            : i
-        )
+        .map((i) => {
+          if (i.product_id !== productId) return i;
+          const p = products.find((prod) => prod.id === productId);
+          if (!p) return i;
+          const maxQty = i.sell_mode === "pack" && p.pack_size ? Math.floor(p.quantity / p.pack_size) : p.quantity;
+          const newQty = Math.min(Math.max(i.quantity + delta, 0), maxQty);
+          return { ...i, quantity: newQty, subtotal: newQty * i.unit_price };
+        })
         .filter((i) => i.quantity > 0)
     );
+  }
+
+  function toggleMode(item: SaleItem) {
+    const p = products.find((prod) => prod.id === item.product_id);
+    if (!p || p.sell_type !== "both") return;
+    const newMode = item.sell_mode === "pack" ? "unit" : "pack";
+    const isPack = newMode === "pack";
+    const price = isPack && p.sell_price_pack ? p.sell_price_pack : p.sell_price;
+    const label = isPack ? (p.pack_label || "Pack") : (p.unit_label || "Unit");
+    const maxQty = isPack && p.pack_size ? Math.floor(p.quantity / p.pack_size) : p.quantity;
+    
+    const newQty = Math.min(1, maxQty);
+    setCart((prev) => prev.map(i => i.product_id === item.product_id ? {
+      ...i, sell_mode: newMode, sell_label: label, unit_price: price, quantity: newQty, subtotal: newQty * price
+    } : i));
   }
 
   const total = cart.reduce((s, i) => s + i.subtotal, 0);
@@ -118,7 +164,8 @@ export default function NewSalePage() {
       for (const item of cart) {
         const p = await db.products.get(item.product_id);
         if (p) {
-          const newQty = Math.max((p.quantity || 0) - item.quantity, 0);
+          const deduction = item.sell_mode === "pack" && p.pack_size ? item.quantity * p.pack_size : item.quantity;
+          const newQty = Math.max((p.quantity || 0) - deduction, 0);
           const threshold = business.low_stock_threshold || 5;
 
           await db.products.update(item.product_id, { quantity: newQty });
@@ -224,24 +271,41 @@ export default function NewSalePage() {
             />
           </div>
           <div className="space-y-1.5 max-h-48 overflow-y-auto">
-            {filtered.slice(0, 8).map((p) => (
-              <button
-                key={p.id}
-                onClick={() => addToCart(p)}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-green-50 transition-colors group"
-              >
-                <div className="text-left">
-                  <p className="text-sm font-bold text-gray-900">{p.name}</p>
-                  <p className="text-xs text-gray-400">{p.quantity} in stock</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-gray-900">{formatCurrency(p.sell_price)}</span>
-                  <div className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Plus className="w-3 h-3" />
+            {filtered.slice(0, 8).map((p) => {
+              const uLabel = p.unit_label || "Unit";
+              const pLabel = p.pack_label || "Pack";
+              const packs = p.pack_size && p.pack_size > 0 ? Math.floor(p.quantity / p.pack_size) : null;
+              
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => handleProductClick(p)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-green-50 transition-colors group"
+                >
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-gray-900">{p.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 whitespace-nowrap">
+                      {p.sell_type === 'pack' && packs !== null ? `${packs} ${pLabel}` :
+                       p.sell_type === 'both' && packs !== null ? `${p.quantity} ${uLabel} (${packs} ${pLabel})` :
+                       `${p.quantity} ${uLabel}`}
+                    </p>
                   </div>
-                </div>
-              </button>
-            ))}
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      {(p.sell_type === 'unit' || p.sell_type === 'both') && (
+                        <span className="text-sm font-bold text-gray-900 block">{formatCurrency(p.sell_price)} <span className="text-[10px] text-gray-400 font-normal">/ {uLabel}</span></span>
+                      )}
+                      {(p.sell_type === 'pack' || p.sell_type === 'both') && p.sell_price_pack && (
+                        <span className="text-sm font-bold text-gray-900 block">{formatCurrency(p.sell_price_pack)} <span className="text-[10px] text-gray-400 font-normal">/ {pLabel}</span></span>
+                      )}
+                    </div>
+                    <div className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Plus className="w-3 h-3" />
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
             {filtered.length === 0 && (
               <p className="text-sm text-gray-400 text-center py-3">No products available</p>
             )}
@@ -258,7 +322,25 @@ export default function NewSalePage() {
               {cart.map((item) => (
                 <div key={item.product_id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                   <div className="flex-1">
-                    <p className="text-sm font-bold text-gray-900">{item.product_name}</p>
+                    <p className="text-sm font-bold text-gray-900 flex items-center flex-wrap gap-1">
+                      {item.product_name}
+                      {(() => {
+                        const p = products.find(prod => prod.id === item.product_id);
+                        if (!p || p.sell_type === 'unit') return null;
+                        return (
+                          <button
+                            onClick={() => toggleMode(item)}
+                            disabled={p.sell_type !== 'both'}
+                            className={cn(
+                              "px-1.5 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap",
+                              p.sell_type === 'both' ? "bg-green-100 text-green-700 hover:bg-green-200" : "text-gray-500 bg-gray-100"
+                            )}
+                          >
+                            ({item.sell_label || (item.sell_mode === "pack" ? "Pack" : "Unit")})
+                          </button>
+                        );
+                      })()}
+                    </p>
                     <p className="text-xs text-gray-400">{formatCurrency(item.unit_price)} each</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -350,6 +432,50 @@ export default function NewSalePage() {
           {submitting ? "Processing..." : `Record Sale · ${formatCurrency(total)}`}
         </button>
       </div>
+
+      {/* Select Pack/Unit Modal */}
+      {showPackSelect && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm"
+          onClick={() => setShowPackSelect(null)}
+        >
+          <div 
+            className="bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl animate-slide-up"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="font-bold text-gray-900 truncate pr-4">{showPackSelect.name}</h3>
+              <button 
+                onClick={() => setShowPackSelect(null)}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-4 font-medium text-center">How are you selling this?</p>
+            
+            <div className="grid grid-cols-2 gap-3 mb-2">
+              <button 
+                onClick={() => addToCart(showPackSelect, "unit")}
+                className="py-6 rounded-2xl border-2 border-gray-100 hover:border-green-500 hover:bg-green-50 transition-colors flex flex-col items-center gap-1 group"
+              >
+                 <span className="font-bold text-gray-900 group-hover:text-green-700">{showPackSelect.unit_label || "Unit"}</span>
+                 <span className="text-sm text-gray-500 group-hover:text-green-600">{formatCurrency(showPackSelect.sell_price)} each</span>
+              </button>
+
+              <button 
+                onClick={() => addToCart(showPackSelect, "pack")}
+                className="py-6 rounded-2xl border-2 border-gray-100 hover:border-green-500 hover:bg-green-50 transition-colors flex flex-col items-center gap-1 group"
+              >
+                 <span className="font-bold text-gray-900 group-hover:text-green-700">{showPackSelect.pack_label || "Pack"}</span>
+                 <span className="text-sm text-gray-500 group-hover:text-green-600">{formatCurrency(showPackSelect.sell_price_pack || 0)} each</span>
+              </button>
+            </div>
+            
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {
   ShoppingCart,
   Users,
   MoreHorizontal,
-  FileText,
+  BarChart,
   Landmark,
   Settings,
   X,
@@ -20,11 +20,11 @@ const PRIMARY_NAV = [
   { icon: LayoutDashboard, label: "Home",      href: "/dashboard" },
   { icon: Package,         label: "Inventory", href: "/dashboard/inventory" },
   { icon: ShoppingCart,    label: "Sales",     href: "/dashboard/sales" },
-  { icon: Users,           label: "Credit",    href: "/dashboard/credit" },
+  { icon: BarChart,        label: "Reports",   href: "/dashboard/reports" },
 ];
 
 const MORE_ITEMS = [
-  { icon: FileText,  label: "Statements",   href: "/dashboard/statements" },
+  { icon: Users,     label: "Credit",       href: "/dashboard/credit" },
   { icon: Landmark,  label: "Finance",      href: "/dashboard/finance" },
   { icon: Settings,  label: "Settings",     href: "/dashboard/settings" },
 ];

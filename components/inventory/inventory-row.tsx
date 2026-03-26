@@ -115,12 +115,20 @@ export default function InventoryRow({ product, onUpdate, onDeleteRequest }: Pro
 
         <div className="text-right shrink-0">
           <p className="text-sm font-bold text-gray-900">{formatCurrency(product.sell_price)}</p>
-          <p className="text-xs text-gray-500 mt-0.5">
-             {product.quantity} 
-             {product.sell_type === 'pack' || product.sell_type === 'both' 
-               ? ` units (${Math.floor(product.quantity / (product.pack_size || 1))} packs)`
-               : ` ${product.unit_label || 'units'}`
-             }
+          <p className="text-xs text-gray-500 mt-0.5 whitespace-nowrap">
+            {(() => {
+              const uLabel = product.unit_label || 'Units';
+              const pLabel = product.pack_label || 'Packs';
+              const packs = product.pack_size ? Math.floor(product.quantity / product.pack_size) : null;
+              
+              if (product.sell_type === 'pack' && packs !== null) {
+                return `${packs} ${pLabel}`;
+              } else if (product.sell_type === 'both' && packs !== null) {
+                return `${product.quantity} ${uLabel} (${packs} ${pLabel})`;
+              } else {
+                return `${product.quantity} ${uLabel}`;
+              }
+            })()}
           </p>
         </div>
 
@@ -136,8 +144,14 @@ export default function InventoryRow({ product, onUpdate, onDeleteRequest }: Pro
               <div>
                  <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Pricing</p>
                  <p>Buy: {formatCurrency(product.buy_price)}</p>
-                 {product.sell_type === 'both' && product.sell_price_pack && (
-                    <p>Pack: {formatCurrency(product.sell_price_pack)}</p>
+                 {(product.sell_type === 'unit' || product.sell_type === 'both') && (
+                    <p>Price per {product.unit_label || 'Unit'}: {formatCurrency(product.sell_price)}</p>
+                 )}
+                 {(product.sell_type === 'pack' || product.sell_type === 'both') && product.sell_price_pack && (
+                    <p>Price per {product.pack_label || 'Pack'}: {formatCurrency(product.sell_price_pack)}</p>
+                 )}
+                 {(product.sell_type === 'pack' || product.sell_type === 'both') && product.pack_size && (
+                    <p className="text-xs text-gray-500 mt-1">Pack size: {product.pack_size} {product.unit_label || 'Units'} per {product.pack_label || 'Pack'}</p>
                  )}
               </div>
               <div>

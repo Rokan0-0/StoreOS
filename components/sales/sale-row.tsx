@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency, cn, shareViaWhatsApp } from "@/lib/utils";
 import type { Sale } from "@/types";
 import { ChevronRight, Share2, Ban, X } from "lucide-react";
 import { db } from "@/lib/db";
@@ -65,13 +65,13 @@ export default function SaleRow({ sale, onRefresh }: Props) {
     }
   }
 
-  function handleShare() {
+  async function handleShare() {
     const text = `
 *Receipt #${sale.id.slice(0, 5).toUpperCase()}*
 ${new Date(sale.created_at ?? "").toLocaleString("en-NG", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
 
 *Items Sold*
-${sale.items.map(i => `${i.product_name} x${i.quantity} = ${formatCurrency(i.subtotal)}`).join("\n")}
+${sale.items.map(i => `${i.product_name} x${i.quantity} ${i.sell_label || ''} = ${formatCurrency(i.subtotal)}`).join("\n")}
 
 *Total:* ${formatCurrency(sale.total)}
 Payment: ${sale.payment_type}
@@ -80,7 +80,7 @@ ${sale.customer_name ? `Customer: ${sale.customer_name}` : ""}
 Thank you for your patronage!
     `.trim();
 
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    await shareViaWhatsApp(text);
   }
 
   return (
@@ -159,7 +159,7 @@ Thank you for your patronage!
                    <div key={idx} className="flex items-start justify-between">
                      <div className="flex-1 pr-4">
                        <span className="font-semibold text-gray-900">{item.product_name}</span>
-                       <span className="text-gray-500 block text-xs mt-0.5">x{item.quantity} @ {formatCurrency(item.unit_price)}</span>
+                       <span className="text-gray-500 block text-xs mt-0.5">x{item.quantity} {item.sell_label || ''} @ {formatCurrency(item.unit_price)}</span>
                      </div>
                      <span className="font-medium text-gray-900">{formatCurrency(item.subtotal)}</span>
                    </div>

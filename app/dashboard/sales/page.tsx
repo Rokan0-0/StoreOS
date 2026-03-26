@@ -29,6 +29,34 @@ export default function SalesPage() {
   }
 
   const filtered = filter === "All" ? sales : sales.filter((s) => s.payment_type === filter);
+  
+  const grouped = filtered.reduce((groups, sale) => {
+    if (!sale.created_at) return groups;
+    const dateStr = sale.created_at.split("T")[0];
+    if (!groups[dateStr]) {
+      groups[dateStr] = { date: dateStr, sales: [], total: 0 };
+    }
+    groups[dateStr].sales.push(sale);
+    groups[dateStr].total += sale.total;
+    return groups;
+  }, {} as Record<string, { date: string; sales: Sale[]; total: number }>);
+
+  const sortedGroups = Object.values(grouped).sort((a, b) => b.date.localeCompare(a.date));
+
+  function getDateLabel(dateStr: string) {
+    const today = new Date().toISOString().split("T")[0];
+    const yDate = new Date();
+    yDate.setDate(yDate.getDate() - 1);
+    const yesterday = yDate.toISOString().split("T")[0];
+
+    const d = new Date(dateStr);
+    const formatted = d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    
+    if (dateStr === today) return `Today, ${formatted}`;
+    if (dateStr === yesterday) return `Yesterday, ${formatted}`;
+    return formatted;
+  }
+
   const totalToday = sales
     .filter((s) => s.created_at?.startsWith(new Date().toISOString().split("T")[0]))
     .reduce((sum, s) => sum + s.total, 0);
@@ -79,15 +107,25 @@ export default function SalesPage() {
             <Link href="/dashboard/sales/new" className="mt-3 inline-block btn-primary text-sm">Record a sale</Link>
           </div>
         ) : (
-          <div className="space-y-2">
-            {filtered.map((sale) => (
-              <SaleRow 
-                key={sale.id} 
-                sale={sale} 
-                onRefresh={() => {
-                  if (business) loadSales(business.id);
-                }} 
-              />
+          <div className="space-y-6">
+            {sortedGroups.map((group) => (
+              <div key={group.date} className="space-y-2">
+                <div className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-md -mx-4 px-4 py-2 border-y border-gray-100 flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-500">{getDateLabel(group.date)}</span>
+                  <span className="text-sm font-semibold text-gray-700">{formatCurrency(group.total)}</span>
+                </div>
+                <div className="space-y-2">
+                  {group.sales.map((sale) => (
+                    <SaleRow 
+                      key={sale.id} 
+                      sale={sale} 
+                      onRefresh={() => {
+                        if (business) loadSales(business.id);
+                      }} 
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}

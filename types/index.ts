@@ -44,6 +44,8 @@ export interface SaleItem {
   product_id: string;
   product_name: string;
   quantity: number;
+  sell_mode?: "unit" | "pack";
+  sell_label?: string;
   unit_price: number;
   subtotal: number;
 }

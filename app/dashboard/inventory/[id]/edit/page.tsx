@@ -87,9 +87,7 @@ export default function EditProductPage(props: { params: Promise<{ id: string }>
     if ((form.sell_type === "pack" || form.sell_type === "both") && !form.pack_size) {
       return setError("Pack size is required for packed items.");
     }
-    if ((form.sell_type === "pack" || form.sell_type === "both") && !form.sell_price_pack) {
-      return setError("Pack selling price is required.");
-    }
+
 
     setSaving(true);
     try {
@@ -116,7 +114,7 @@ export default function EditProductPage(props: { params: Promise<{ id: string }>
         pack_size: parseInt(form.pack_size) || null,
         pack_label: form.pack_label.trim() || null,
         unit_label: form.unit_label.trim() || null,
-        sell_price_pack: parseFloat(form.sell_price_pack) || null,
+        sell_price_pack: form.sell_price_pack ? parseFloat(form.sell_price_pack) : (parseFloat(form.sell_price) * parseInt(form.pack_size) || null),
         sku: form.sku.trim() || undefined,
         updated_at: new Date().toISOString(),
       };
@@ -225,8 +223,13 @@ export default function EditProductPage(props: { params: Promise<{ id: string }>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Pack Selling Price (₦) *</label>
-                  <input className="input" type="number" placeholder="0.00" value={form.sell_price_pack} onChange={(e) => updateForm("sell_price_pack", e.target.value)} />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Pack Selling Price (₦)</label>
+                  <input className="input" type="number" placeholder="Leave blank to auto-calc" value={form.sell_price_pack} onChange={(e) => updateForm("sell_price_pack", e.target.value)} />
+                  {!form.sell_price_pack && form.sell_price && form.pack_size && !isNaN(parseFloat(form.sell_price)) && !isNaN(parseInt(form.pack_size)) && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Auto: ₦{form.sell_price} × {form.pack_size} = <span className="font-bold text-gray-900">₦{(parseFloat(form.sell_price) * parseInt(form.pack_size)).toLocaleString()}</span>
+                    </p>
+                  )}
                 </div>
               </div>
             )}

@@ -42,3 +42,19 @@ export function endOfDay(dateStr: string): Date {
   d.setHours(23, 59, 59, 999);
   return d;
 }
+
+export async function shareViaWhatsApp(text: string) {
+  if (typeof navigator !== "undefined" && navigator.share) {
+    try {
+      await navigator.share({ text });
+      return;
+    } catch (err) {
+      // User cancelled or share failed — fall through
+    }
+  }
+  window.open(
+    `https://wa.me/?text=${encodeURIComponent(text)}`,
+    "_blank",
+    "noopener,noreferrer"
+  );
+}

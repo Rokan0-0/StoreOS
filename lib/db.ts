@@ -22,7 +22,7 @@ export class StoreOSDatabase extends Dexie {
 
   constructor() {
     super("StoreOSDB");
-    this.version(3).stores({
+    this.version(4).stores({
       businesses: "id, owner_id",
       products: "id, business_id, name, category, sell_type, sku, updated_at",
       customers: "id, business_id",
@@ -31,6 +31,12 @@ export class StoreOSDatabase extends Dexie {
       statements: "id, business_id, period_start, type",
       restock_logs: "id, business_id, product_id, created_at",
       sync_queue: "++id, table_name, operation, record_id, created_at",
+    }).upgrade(async tx => {
+      await tx.table("products").toCollection().modify((product: any) => {
+        if (!product.sell_type) product.sell_type = "unit";
+        if (!product.unit_label) product.unit_label = "Unit";
+        if (!product.pack_label) product.pack_label = "Pack";
+      });
     });
   }
 }
