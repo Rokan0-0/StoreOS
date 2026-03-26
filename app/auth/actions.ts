@@ -47,3 +47,18 @@ export async function logout() {
   revalidatePath("/", "layout");
   redirect("/login");
 }
+
+export async function sendMagicLink(formData: FormData) {
+  const email = formData.get("email") as string;
+  const supabase = await createClient();
+  
+  // Uses Magic Link resetting which has higher rate limits than standard OTP
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/login`,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true };
+}

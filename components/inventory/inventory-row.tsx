@@ -22,6 +22,7 @@ export default function InventoryRow({ product, onUpdate, onDeleteRequest }: Pro
   const [qtyToAdd, setQtyToAdd] = useState("");
   const [supplier, setSupplier] = useState("");
   const [cost, setCost] = useState(product.buy_price.toString());
+  const [restockType, setRestockType] = useState<"unit" | "pack">("unit");
   const [saving, setSaving] = useState(false);
 
   const isLow = product.quantity <= product.threshold;
@@ -29,8 +30,12 @@ export default function InventoryRow({ product, onUpdate, onDeleteRequest }: Pro
 
   async function handleRestock(e: React.FormEvent) {
     e.preventDefault();
-    const qty = parseInt(qtyToAdd);
+    let qty = parseInt(qtyToAdd);
     if (!qty || isNaN(qty)) return;
+
+    if ((product.sell_type === "pack" || product.sell_type === "both") && restockType === "pack" && product.pack_size) {
+       qty = qty * product.pack_size;
+    }
 
     setSaving(true);
     try {
@@ -171,10 +176,30 @@ export default function InventoryRow({ product, onUpdate, onDeleteRequest }: Pro
                     <button type="button" onClick={() => setShowRestock(false)} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
                  </h4>
                  <div className="grid grid-cols-2 gap-3 mb-3">
-                    <div>
-                       <label className="text-xs text-gray-500 mb-1 block">Quantity Added</label>
-                       <input autoFocus type="number" required placeholder="0" value={qtyToAdd} onChange={e => setQtyToAdd(e.target.value)} className="input py-2 text-sm" />
-                    </div>
+                     <div>
+                        <label className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                          <span>Quantity Added</span>
+                          {(product.sell_type === "pack" || product.sell_type === "both") && (
+                            <select 
+                              className="text-xs bg-transparent text-green-700 font-bold focus:outline-none cursor-pointer"
+                              value={restockType}
+                              onChange={(e) => {
+                                const newType = e.target.value as "unit" | "pack";
+                                if (newType !== restockType && qtyToAdd && !isNaN(parseInt(qtyToAdd))) {
+                                  const q = parseInt(qtyToAdd);
+                                  const p = product.pack_size || 1;
+                                  setQtyToAdd(newType === "pack" ? Math.floor(q/p).toString() : (q*p).toString());
+                                }
+                                setRestockType(newType);
+                              }}
+                            >
+                              <option value="unit">{product.unit_label || "Units"}</option>
+                              <option value="pack">{product.pack_label || "Packs"}</option>
+                            </select>
+                          )}
+                        </label>
+                        <input autoFocus type="number" required placeholder="0" value={qtyToAdd} onChange={e => setQtyToAdd(e.target.value)} className="input py-2 text-sm" />
+                     </div>
                     <div>
                        <label className="text-xs text-gray-500 mb-1 block">New Unit Cost</label>
                        <input type="number" required placeholder="0" value={cost} onChange={e => setCost(e.target.value)} className="input py-2 text-sm" />

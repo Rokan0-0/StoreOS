@@ -78,6 +78,10 @@ export default function NewSalePage() {
           );
         } else {
           const maxQty = isPack && product.pack_size ? Math.floor(product.quantity / product.pack_size) : product.quantity;
+          if (existing.quantity >= maxQty) {
+            toast.error(`Cannot add more. Only ${maxQty} ${label} available in stock.`);
+            return prev;
+          }
           const newQty = Math.min(existing.quantity + 1, maxQty);
           return prev.map((i) =>
             i.product_id === product.id
@@ -85,6 +89,11 @@ export default function NewSalePage() {
               : i
           );
         }
+      }
+      const maxQty = isPack && product.pack_size ? Math.floor(product.quantity / product.pack_size) : product.quantity;
+      if (maxQty < 1) {
+        toast.error(`Not enough stock. Need at least 1 ${label}.`);
+        return prev;
       }
       return [
         ...prev,
@@ -110,6 +119,10 @@ export default function NewSalePage() {
           const p = products.find((prod) => prod.id === productId);
           if (!p) return i;
           const maxQty = i.sell_mode === "pack" && p.pack_size ? Math.floor(p.quantity / p.pack_size) : p.quantity;
+          if (delta > 0 && i.quantity >= maxQty) {
+            toast.error(`Cannot add more. Only ${maxQty} ${i.sell_label || 'units'} in stock.`);
+            return i;
+          }
           const newQty = Math.min(Math.max(i.quantity + delta, 0), maxQty);
           return { ...i, quantity: newQty, subtotal: newQty * i.unit_price };
         })

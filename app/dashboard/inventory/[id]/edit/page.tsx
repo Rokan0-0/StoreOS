@@ -42,10 +42,25 @@ export default function EditProductPage(props: { params: Promise<{ id: string }>
     sku: "",
   });
   
+  const [stockType, setStockType] = useState<"unit" | "pack">("unit");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [loadingObj, setLoading] = useState(true);
+
+  function handleStockTypeChange(newType: "unit" | "pack") {
+    if (newType === stockType) return;
+    if (form.quantity && !isNaN(parseInt(form.quantity))) {
+       const qty = parseInt(form.quantity);
+       const pSize = parseInt(form.pack_size) || 1;
+       if (newType === "pack") {
+          updateForm("quantity", Math.floor(qty / pSize).toString());
+       } else {
+          updateForm("quantity", (qty * pSize).toString());
+       }
+    }
+    setStockType(newType);
+  }
 
   useEffect(() => {
     async function fetch() {
@@ -108,7 +123,9 @@ export default function EditProductPage(props: { params: Promise<{ id: string }>
         category: form.category,
         buy_price: parseFloat(form.buy_price) || 0,
         sell_price: parseFloat(form.sell_price),
-        quantity: parseInt(form.quantity),
+        quantity: ((form.sell_type === "pack" || form.sell_type === "both") && stockType === "pack" && form.pack_size)
+          ? parseInt(form.quantity) * parseInt(form.pack_size)
+          : parseInt(form.quantity),
         threshold: parseInt(form.threshold) || 5,
         sell_type: form.sell_type,
         pack_size: parseInt(form.pack_size) || null,
@@ -242,7 +259,19 @@ export default function EditProductPage(props: { params: Promise<{ id: string }>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Current Stock *</label>
+              <label className="flex items-center justify-between text-sm font-semibold text-gray-700 mb-1.5">
+                <span>Current Stock *</span>
+                {(form.sell_type === "pack" || form.sell_type === "both") && (
+                  <select 
+                    className="text-xs bg-transparent text-green-700 font-bold focus:outline-none cursor-pointer"
+                    value={stockType}
+                    onChange={(e) => handleStockTypeChange(e.target.value as "unit" | "pack")}
+                  >
+                    <option value="unit">in {form.unit_label || "Units"}</option>
+                    <option value="pack">in {form.pack_label || "Packs"}</option>
+                  </select>
+                )}
+              </label>
               <input
                 className="input"
                 type="number"
@@ -250,7 +279,11 @@ export default function EditProductPage(props: { params: Promise<{ id: string }>
                 value={form.quantity}
                 onChange={(e) => updateForm("quantity", e.target.value)}
               />
-              <p className="mt-1 text-xs text-gray-400">Total units stored</p>
+              <p className="mt-1 text-xs text-gray-400">
+                {stockType === "pack" && form.pack_size && !isNaN(parseInt(form.quantity)) 
+                  ? `= ${parseInt(form.quantity) * parseInt(form.pack_size)} total ${form.unit_label || 'units'}`
+                  : "Total units stored"}
+              </p>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Alert Threshold</label>

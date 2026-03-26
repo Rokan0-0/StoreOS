@@ -75,10 +75,10 @@ export default function InventoryPage() {
     
     const samples: Product[] = [
       { id: uuidv4(), business_id: business.id, name: "Peak Milk 400g", category: "Dairy", buy_price: 1500, sell_price: 1800, quantity: 24, threshold: 5, sell_type: "unit", updated_at: new Date().toISOString() },
-      { id: uuidv4(), business_id: business.id, name: "Milo 500g", category: "Beverages", buy_price: 2000, sell_price: 2500, quantity: 15, threshold: 5, sell_type: "unit", updated_at: new Date().toISOString() },
+      { id: uuidv4(), business_id: business.id, name: "Coca Cola 50cl", category: "Beverages", buy_price: 200, sell_price: 300, quantity: 120, threshold: 24, sell_type: "both", pack_size: 12, pack_label: "Pack", unit_label: "Bottle", sell_price_pack: 3500, updated_at: new Date().toISOString() },
       { id: uuidv4(), business_id: business.id, name: "Golden Penny Spaghetti", category: "Grains & Cereals", buy_price: 400, sell_price: 550, quantity: 50, threshold: 10, sell_type: "unit", updated_at: new Date().toISOString() },
-      { id: uuidv4(), business_id: business.id, name: "Eva Water 75cl", category: "Beverages", buy_price: 150, sell_price: 250, quantity: 120, threshold: 20, sell_type: "unit", updated_at: new Date().toISOString() },
-      { id: uuidv4(), business_id: business.id, name: "Digestive Biscuits", category: "Snacks", buy_price: 800, sell_price: 1000, quantity: 30, threshold: 5, sell_type: "unit", updated_at: new Date().toISOString() },
+      { id: uuidv4(), business_id: business.id, name: "Eva Water 75cl", category: "Beverages", buy_price: 150, sell_price: 250, quantity: 72, threshold: 24, sell_type: "pack", pack_size: 12, pack_label: "Pack", unit_label: "Bottle", sell_price_pack: 2800, updated_at: new Date().toISOString() },
+      { id: uuidv4(), business_id: business.id, name: "Indomie Onion Chicken", category: "Snacks", buy_price: 150, sell_price: 250, quantity: 160, threshold: 40, sell_type: "both", pack_size: 40, pack_label: "Carton", unit_label: "Pack", sell_price_pack: 9500, updated_at: new Date().toISOString() },
     ];
 
     try {

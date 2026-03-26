@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Toaster } from "react-hot-toast";
+import PwaUpdater from "@/components/layout/PwaUpdater";
 
 export const metadata: Metadata = {
   title: "StoreOS — Business Management for SME Supermarkets",
@@ -27,7 +29,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <Toaster />
+        <PwaUpdater />
+      </body>
     </html>
   );
 }
